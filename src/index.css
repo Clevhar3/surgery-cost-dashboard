@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-primary-50: #EFF6FF;
+  --color-primary-100: #DBEAFE;
+  --color-primary-200: #BFDBFE;
+  --color-primary-300: #93C5FD;
+  --color-primary-400: #60A5FA;
+  --color-primary-500: #3B82F6;
+  --color-primary-600: #2563EB;
+  --color-primary-700: #1D4ED8;
+  --color-primary-800: #1E40AF;
+  --color-primary-900: #1E3A8A;
+  --color-primary-950: #172554;
+  --color-surface: #FFFFFF;
+  --color-surface-dark: #1E293B;
+  --color-surface-darker: #0F172A;
+  --color-border: #E2E8F0;
+  --color-border-dark: #334155;
+}
+
+body {
+  margin: 0;
+  background-color: #F8FAFC;
+  color: #0F172A;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.dark body {
+  background-color: #0F172A;
+  color: #E2E8F0;
+}
+
+.card {
+  background: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  border: 1px solid #E2E8F0;
+  padding: 1.5rem;
+}
+
+.dark .card {
+  background: #1E293B;
+  border-color: #334155;
+}
+
+.recharts-text {
+  fill: #475569;
+}
+
+.dark .recharts-text {
+  fill: #94A3B8;
+}
+
+.recharts-cartesian-grid line {
+  stroke: #E2E8F0;
+}
+
+.dark .recharts-cartesian-grid line {
+  stroke: #334155;
+}
