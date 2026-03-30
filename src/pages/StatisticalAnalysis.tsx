@@ -224,9 +224,9 @@ export function StatisticalAnalysis({
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                     <XAxis type="number" tickFormatter={formatCurrency} fontSize={12} />
                     <YAxis type="category" dataKey="label" width={95} fontSize={12} tick={{ fill: '#64748B' }} />
-                    <Tooltip formatter={(v: number) => [formatCurrencyFull(v), 'Impact']} />
+                    <Tooltip formatter={(v) => [formatCurrencyFull(Number(v)), 'Impact']} />
                     <Bar dataKey="impact" radius={[0, 4, 4, 0]}>
-                      {tornadoData.map((entry, i) => (
+                      {tornadoData.map((_, i) => (
                         <Cell key={i} fill={Object.values(FEE_COLORS)[i] || CHART_COLORS.muted} />
                       ))}
                     </Bar>
@@ -244,7 +244,7 @@ export function StatisticalAnalysis({
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="name" fontSize={11} tick={{ fill: '#64748B' }} />
                     <YAxis tickFormatter={formatCurrency} fontSize={12} />
-                    <Tooltip formatter={(value: number, name: string) => [formatCurrencyFull(value), name]} />
+                    <Tooltip formatter={(value, name) => [formatCurrencyFull(Number(value)), String(name)]} />
                     <Legend />
                     <Bar dataKey="min" name="Min" fill="#94A3B8" maxBarSize={30} radius={[2, 2, 0, 0]} />
                     <Bar dataKey="q1" name="Q1 (25th)" fill="#93C5FD" maxBarSize={30} radius={[2, 2, 0, 0]} />
