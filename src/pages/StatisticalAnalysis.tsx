@@ -16,7 +16,7 @@ import {
   formatCurrency, formatCurrencyFull,
   titleCase, regionDisplayName, gpoDisplayName,
 } from '../lib/formatters'
-import { FEE_COLORS, REGION_COLORS, GPO_COLORS, CHART_COLORS } from '../lib/colors'
+import { FEE_COLORS, CHART_COLORS } from '../lib/colors'
 
 function NarrativeText({ text }: { text: string }) {
   // Parse markdown bold (**text**) into React elements safely
@@ -200,7 +200,7 @@ export function StatisticalAnalysis({
                     <XAxis dataKey="name" fontSize={11} tick={{ fill: '#64748B' }} />
                     <YAxis tickFormatter={formatCurrency} fontSize={12} />
                     <Tooltip
-                      formatter={(value: number, name: string) => [formatCurrencyFull(value), titleCase(name.replace('_', ' '))]}
+                      formatter={(value, name) => [formatCurrencyFull(Number(value)), titleCase(String(name).replace('_', ' '))]}
                     />
                     <Legend formatter={(v) => titleCase(v.replace('_', ' '))} />
                     {Object.entries(FEE_COLORS).map(([key, color]) => (

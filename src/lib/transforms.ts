@@ -58,7 +58,7 @@ export function computeGPOBySpecialty(
   const gpos = selectedGPOs.length > 0 ? selectedGPOs : getUniqueValues(data, 'gpo')
 
   return specialties.map((specialty) => {
-    const row: Record<string, number | string> = { specialty }
+    const row: { specialty: string; [gpo: string]: number | string } = { specialty }
     for (const gpo of gpos) {
       const filtered = data.filter((d) => d.specialty === specialty && d.gpo === gpo)
       row[gpo] = filtered.length > 0 ? mean(filtered.map((d) => Number(d.estimated_cost_median))) : 0
