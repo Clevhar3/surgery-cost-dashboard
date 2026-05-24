@@ -10,6 +10,7 @@ import { Header } from '../components/layout/Header'
 import { Reveal } from '../components/ui/Reveal'
 import { Select } from '../components/ui/Select'
 import { Segmented } from '../components/ui/Button'
+import { useMediaQuery } from '../hooks/useMediaQuery'
 import {
   mean, stddev, coefficientOfVariation, boxPlotStats,
   computeCorrelationMatrix, factorDecomposition,
@@ -25,7 +26,7 @@ import { FEE_COLORS, CHART_COLORS } from '../lib/colors'
 function NarrativeText({ text }: { text: string }) {
   const parts = text.split(/\*\*(.*?)\*\*/g)
   return (
-    <p className="text-[15px] leading-relaxed text-ink-2 text-pretty">
+    <p className="text-[14px] sm:text-[15px] leading-relaxed text-ink-2 text-pretty">
       {parts.map((part, i) =>
         i % 2 === 1 ? (
           <strong key={i} className="font-semibold text-ink">
@@ -51,6 +52,7 @@ export function StatisticalAnalysis({
   const [searchParams] = useSearchParams()
   const [selectedProc, setSelectedProc] = useState<string>(searchParams.get('procedure') || '')
   const [compareBy, setCompareBy] = useState<'region' | 'gpo'>('region')
+  const isMobile = useMediaQuery('(max-width: 640px)')
 
   const procedures = useMemo(() => getUniqueValues(data, 'procedure_name'), [data])
 
@@ -135,10 +137,10 @@ export function StatisticalAnalysis({
         allGPOs={allGPOs}
       />
 
-      <section className="space-y-8 pb-24">
+      <section className="space-y-6 sm:space-y-8 pb-16 sm:pb-24">
         <Reveal>
           <div className="bezel-outer">
-            <div className="bezel-inner p-6">
+            <div className="bezel-inner p-5 sm:p-6">
               <div className="grid grid-cols-12 gap-4 items-end">
                 <div className="col-span-12 md:col-span-7">
                   <Select
@@ -176,10 +178,10 @@ export function StatisticalAnalysis({
           <>
             <Reveal delay={1}>
               <div className="bezel-outer">
-                <div className="bezel-inner relative overflow-hidden p-8 md:p-10">
+                <div className="bezel-inner relative overflow-hidden p-6 sm:p-8 md:p-10">
                   <div
                     aria-hidden
-                    className="absolute -top-12 -right-12 h-48 w-48 rounded-full bg-coral-100/70 blur-3xl"
+                    className="absolute -top-12 -right-12 h-48 w-48 rounded-full bg-coral-100/70 dark:bg-coral-900/30 blur-3xl"
                   />
                   <div className="relative">
                     <div className="flex items-center gap-2">
@@ -197,29 +199,29 @@ export function StatisticalAnalysis({
             </Reveal>
 
             {statsCards && (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                <StatCard delay={1} label="Mean" value={formatCurrencyFull(statsCards.mean)} numeric={statsCards.mean} fmt={(n) => formatCurrencyFull(n)} />
-                <StatCard delay={2} label="Std dev" value={formatCurrencyFull(statsCards.stdDev)} numeric={statsCards.stdDev} fmt={(n) => formatCurrencyFull(n)} />
-                <StatCard delay={3} label="CV" value={`${statsCards.cv.toFixed(1)}%`} numeric={statsCards.cv} fmt={(n) => `${n.toFixed(1)}%`} />
-                <StatCard delay={4} label="IQR" value={formatCurrencyFull(statsCards.iqr)} numeric={statsCards.iqr} fmt={(n) => formatCurrencyFull(n)} />
-                <StatCard delay={5} label="Range" value={formatCurrencyFull(statsCards.range)} numeric={statsCards.range} fmt={(n) => formatCurrencyFull(n)} />
-                <StatCard delay={6} label="Observations" value={String(statsCards.count)} numeric={statsCards.count} fmt={(n) => Math.round(n).toLocaleString()} />
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+                <StatCard delay={1} label="Mean" value={formatCurrencyFull(statsCards.mean)} />
+                <StatCard delay={2} label="Std dev" value={formatCurrencyFull(statsCards.stdDev)} />
+                <StatCard delay={3} label="CV" value={`${statsCards.cv.toFixed(1)}%`} />
+                <StatCard delay={4} label="IQR" value={formatCurrencyFull(statsCards.iqr)} />
+                <StatCard delay={5} label="Range" value={formatCurrencyFull(statsCards.range)} />
+                <StatCard delay={6} label="Observations" value={String(statsCards.count)} />
               </div>
             )}
 
-            <div className="grid grid-cols-12 gap-6">
+            <div className="grid grid-cols-12 gap-4 sm:gap-6">
               <Reveal className="col-span-12 lg:col-span-6" delay={1}>
                 <ChartCard
                   eyebrow={`fee-level · by ${compareBy === 'region' ? 'region' : 'GPO'}`}
                   title="Cost composition"
-                  height={360}
+                  height={isMobile ? 300 : 360}
                 >
-                  <BarChart data={feeData} margin={{ left: 8, right: 8, top: 8, bottom: 8 }}>
-                    <CartesianGrid strokeDasharray="2 4" vertical={false} stroke={CHART_COLORS.grid} />
-                    <XAxis dataKey="name" fontSize={11} tick={{ fill: CHART_COLORS.ink3 }} axisLine={false} tickLine={false} />
-                    <YAxis tickFormatter={formatCurrency} fontSize={11} stroke={CHART_COLORS.ink3} axisLine={false} tickLine={false} />
+                  <BarChart data={feeData} margin={{ left: isMobile ? -10 : 8, right: 8, top: 8, bottom: 8 }}>
+                    <CartesianGrid strokeDasharray="2 4" vertical={false} />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} />
+                    <YAxis tickFormatter={formatCurrency} axisLine={false} tickLine={false} />
                     <Tooltip
-                      cursor={{ fill: 'rgba(244, 93, 72, 0.05)' }}
+                      cursor={{ fill: 'var(--color-tint-coral)' }}
                       formatter={(value, name) => [formatCurrencyFull(Number(value)), titleCase(String(name).replace('_', ' '))]}
                     />
                     <Legend formatter={(v) => titleCase(v.replace('_', ' '))} iconType="circle" wrapperStyle={{ fontSize: 12, paddingTop: 12 }} />
@@ -240,18 +242,18 @@ export function StatisticalAnalysis({
                 <ChartCard
                   eyebrow="variance attribution"
                   title="What drives the spread"
-                  height={360}
+                  height={isMobile ? 300 : 360}
                 >
                   <BarChart
                     data={tornadoData}
                     layout="vertical"
-                    margin={{ left: 120, right: 32, top: 8, bottom: 8 }}
+                    margin={{ left: isMobile ? 80 : 120, right: isMobile ? 16 : 32, top: 8, bottom: 8 }}
                   >
-                    <CartesianGrid strokeDasharray="2 4" horizontal={false} stroke={CHART_COLORS.grid} />
-                    <XAxis type="number" tickFormatter={formatCurrency} fontSize={11} stroke={CHART_COLORS.ink3} axisLine={false} tickLine={false} />
-                    <YAxis type="category" dataKey="label" width={115} fontSize={11} tick={{ fill: CHART_COLORS.ink3 }} axisLine={false} tickLine={false} />
+                    <CartesianGrid strokeDasharray="2 4" horizontal={false} />
+                    <XAxis type="number" tickFormatter={formatCurrency} axisLine={false} tickLine={false} />
+                    <YAxis type="category" dataKey="label" width={isMobile ? 76 : 115} axisLine={false} tickLine={false} />
                     <Tooltip
-                      cursor={{ fill: 'rgba(244, 93, 72, 0.05)' }}
+                      cursor={{ fill: 'var(--color-tint-coral)' }}
                       formatter={(v) => [formatCurrencyFull(Number(v)), 'Impact']}
                     />
                     <Bar dataKey="impact" radius={[0, 6, 6, 0]}>
@@ -267,14 +269,14 @@ export function StatisticalAnalysis({
                 <ChartCard
                   eyebrow={`distribution · by ${compareBy === 'region' ? 'region' : 'GPO'}`}
                   title="Cost distribution"
-                  height={360}
+                  height={isMobile ? 300 : 360}
                 >
-                  <BarChart data={boxData} margin={{ left: 8, right: 8, top: 20, bottom: 8 }}>
-                    <CartesianGrid strokeDasharray="2 4" vertical={false} stroke={CHART_COLORS.grid} />
-                    <XAxis dataKey="name" fontSize={11} tick={{ fill: CHART_COLORS.ink3 }} axisLine={false} tickLine={false} />
-                    <YAxis tickFormatter={formatCurrency} fontSize={11} stroke={CHART_COLORS.ink3} axisLine={false} tickLine={false} />
+                  <BarChart data={boxData} margin={{ left: isMobile ? -10 : 8, right: 8, top: 20, bottom: 8 }}>
+                    <CartesianGrid strokeDasharray="2 4" vertical={false} />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} />
+                    <YAxis tickFormatter={formatCurrency} axisLine={false} tickLine={false} />
                     <Tooltip
-                      cursor={{ fill: 'rgba(244, 93, 72, 0.05)' }}
+                      cursor={{ fill: 'var(--color-tint-coral)' }}
                       formatter={(value, name) => [formatCurrencyFull(Number(value)), String(name)]}
                     />
                     <Legend iconType="circle" wrapperStyle={{ fontSize: 12, paddingTop: 12 }} />
@@ -289,16 +291,16 @@ export function StatisticalAnalysis({
 
               <Reveal className="col-span-12 lg:col-span-6" delay={2}>
                 <div className="bezel-outer h-full">
-                  <div className="bezel-inner p-7 h-full">
-                    <div className="mb-6">
+                  <div className="bezel-inner p-5 sm:p-7 h-full">
+                    <div className="mb-5 sm:mb-6">
                       <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink-4">
                         pairwise · pearson
                       </p>
-                      <h3 className="mt-2 font-display text-[22px] font-medium tracking-tight text-ink">
+                      <h3 className="mt-2 font-display text-[18px] sm:text-[22px] font-medium tracking-tight text-ink">
                         Correlation matrix
                       </h3>
                     </div>
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto -mx-2 px-2 no-scrollbar">
                       <table className="w-full text-[10px]">
                         <thead>
                           <tr>
@@ -326,12 +328,12 @@ export function StatisticalAnalysis({
                                 const absR = Math.abs(r)
                                 const bg = r > 0
                                   ? `rgba(244, 93, 72, ${absR * 0.85})`
-                                  : `rgba(43, 49, 56, ${absR * 0.85})`
-                                const textColor = absR > 0.5 ? '#FCFBF8' : '#2D2A21'
+                                  : `rgba(123, 139, 150, ${absR * 0.85})`
+                                const textColor = absR > 0.5 ? '#FCFBF8' : 'inherit'
                                 return (
                                   <td
                                     key={col}
-                                    className="p-1 text-center tnum font-mono text-[10px]"
+                                    className="p-1 text-center tnum font-mono text-[10px] text-ink-2"
                                     style={{ backgroundColor: bg, color: textColor, minWidth: '38px', borderRadius: 4 }}
                                     title={`${row} vs ${col}: r=${r.toFixed(3)}`}
                                   >
@@ -358,8 +360,6 @@ export function StatisticalAnalysis({
 interface StatCardProps {
   label: string
   value: string
-  numeric: number
-  fmt: (n: number) => string
   delay: 0 | 1 | 2 | 3 | 4 | 5 | 6
 }
 
@@ -367,11 +367,11 @@ function StatCard({ label, value, delay }: StatCardProps) {
   return (
     <Reveal delay={delay}>
       <div className="bezel-outer h-full">
-        <div className="bezel-inner flex flex-col gap-2 p-5 h-full">
+        <div className="bezel-inner flex flex-col gap-2 p-4 sm:p-5 h-full">
           <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink-4">
             {label}
           </span>
-          <span className="font-display text-[22px] font-medium tracking-tight text-ink tnum">
+          <span className="font-display text-[18px] sm:text-[22px] font-medium tracking-tight text-ink tnum">
             {value}
           </span>
         </div>
@@ -390,12 +390,12 @@ interface ChartCardProps {
 function ChartCard({ eyebrow, title, height, children }: ChartCardProps) {
   return (
     <div className="bezel-outer h-full">
-      <div className="bezel-inner p-7 h-full">
-        <div className="mb-6">
+      <div className="bezel-inner p-5 sm:p-7 h-full">
+        <div className="mb-5 sm:mb-6">
           <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink-4">
             {eyebrow}
           </p>
-          <h3 className="mt-2 font-display text-[22px] font-medium tracking-tight text-ink">
+          <h3 className="mt-2 font-display text-[18px] sm:text-[22px] font-medium tracking-tight text-ink">
             {title}
           </h3>
         </div>
@@ -411,12 +411,12 @@ function EmptyAnalysisState() {
   return (
     <Reveal delay={1}>
       <div className="bezel-outer">
-        <div className="bezel-inner relative overflow-hidden p-10 md:p-14">
+        <div className="bezel-inner relative overflow-hidden p-6 sm:p-10 md:p-14">
           <div
             aria-hidden
-            className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-coral-100/60 blur-3xl"
+            className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-coral-100/60 dark:bg-coral-900/25 blur-3xl"
           />
-          <div className="relative grid grid-cols-12 gap-8 items-center">
+          <div className="relative grid grid-cols-12 gap-6 sm:gap-8 items-center">
             <div className="col-span-12 md:col-span-7">
               <div className="flex items-center gap-2">
                 <Equals weight="bold" className="h-4 w-4 text-coral-500" />
@@ -424,15 +424,15 @@ function EmptyAnalysisState() {
                   getting started
                 </p>
               </div>
-              <h2 className="mt-5 font-display text-[36px] md:text-[44px] leading-[0.96] tracking-[-0.03em] text-ink text-balance">
+              <h2 className="mt-4 sm:mt-5 font-display text-[28px] sm:text-[36px] md:text-[44px] leading-[0.96] tracking-[-0.03em] text-ink text-balance">
                 Pick a procedure to begin the decomposition.
               </h2>
-              <p className="mt-5 max-w-md text-[14px] leading-relaxed text-ink-3">
+              <p className="mt-4 sm:mt-5 max-w-md text-[13px] sm:text-[14px] leading-relaxed text-ink-3">
                 Once selected, this page will show six summary statistics, a fee-level cost
                 composition, a tornado of variance drivers, the distribution shape across
                 groups, and a Pearson correlation matrix.
               </p>
-              <ul className="mt-7 grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <ul className="mt-5 sm:mt-7 grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {[
                   'Total knee arthroplasty',
                   'Carpal tunnel release',

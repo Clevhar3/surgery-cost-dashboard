@@ -7,10 +7,11 @@ import type { SurgeryCostRow } from '../types/database'
 import { Header } from '../components/layout/Header'
 import { Reveal } from '../components/ui/Reveal'
 import { Pill, Segmented } from '../components/ui/Button'
+import { useMediaQuery } from '../hooks/useMediaQuery'
 import { computeGPOBySpecialty, getUniqueValues } from '../lib/transforms'
 import { mean, stddev } from '../lib/statistics'
 import { formatCurrency, formatCurrencyFull, gpoDisplayName, titleCase } from '../lib/formatters'
-import { GPO_COLORS, CHART_COLORS } from '../lib/colors'
+import { GPO_COLORS } from '../lib/colors'
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null
@@ -42,6 +43,7 @@ export function GPOComparison({
 }) {
   const [localGPOs, setLocalGPOs] = useState<string[]>(allGPOs)
   const [mode, setMode] = useState<'absolute' | 'relative'>('absolute')
+  const isMobile = useMediaQuery('(max-width: 640px)')
 
   const chartData = useMemo(() => {
     const raw = computeGPOBySpecialty(data, localGPOs)
@@ -102,27 +104,29 @@ export function GPOComparison({
         allGPOs={allGPOs}
       />
 
-      <section className="space-y-8 pb-24">
+      <section className="space-y-6 sm:space-y-8 pb-16 sm:pb-24">
         <Reveal>
           <div className="bezel-outer">
-            <div className="bezel-inner p-6">
-              <div className="flex flex-wrap items-center gap-4">
+            <div className="bezel-inner p-5 sm:p-6">
+              <div className="space-y-4 md:flex md:flex-wrap md:items-center md:gap-4 md:space-y-0">
                 <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink-4">
                   pick GPOs
                 </p>
-                <div className="flex flex-wrap gap-2">
-                  {allGPOs.map((gpo) => (
-                    <Pill
-                      key={gpo}
-                      active={localGPOs.includes(gpo)}
-                      swatch={GPO_COLORS[gpo]}
-                      onClick={() => toggleGPO(gpo)}
-                    >
-                      {gpoDisplayName(gpo)}
-                    </Pill>
-                  ))}
+                <div className="-mx-5 sm:mx-0 overflow-x-auto no-scrollbar">
+                  <div className="flex w-max gap-2 px-5 sm:px-0 sm:w-auto sm:flex-wrap">
+                    {allGPOs.map((gpo) => (
+                      <Pill
+                        key={gpo}
+                        active={localGPOs.includes(gpo)}
+                        swatch={GPO_COLORS[gpo]}
+                        onClick={() => toggleGPO(gpo)}
+                      >
+                        {gpoDisplayName(gpo)}
+                      </Pill>
+                    ))}
+                  </div>
                 </div>
-                <div className="ml-auto flex items-center gap-3">
+                <div className="flex items-center gap-3 md:ml-auto">
                   <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink-4">
                     view
                   </p>
@@ -142,13 +146,13 @@ export function GPOComparison({
 
         <Reveal delay={1}>
           <div className="bezel-outer">
-            <div className="bezel-inner p-7">
-              <div className="mb-6 grid grid-cols-12 items-end gap-4">
+            <div className="bezel-inner p-5 sm:p-7">
+              <div className="mb-5 sm:mb-6 grid grid-cols-12 items-end gap-3 sm:gap-4">
                 <div className="col-span-12 md:col-span-8">
                   <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink-4">
                     figure 1 — cost by specialty &times; GPO
                   </p>
-                  <h2 className="mt-2 font-display text-[24px] md:text-[28px] font-medium tracking-[-0.02em] text-ink">
+                  <h2 className="mt-2 font-display text-[20px] sm:text-[24px] md:text-[28px] font-medium tracking-[-0.02em] text-ink">
                     {mode === 'absolute'
                       ? 'Average median cost'
                       : 'Deviation from specialty mean'}
@@ -160,46 +164,50 @@ export function GPOComparison({
                   </p>
                 </div>
               </div>
-              <ResponsiveContainer width="100%" height={520}>
-                <BarChart data={chartData} margin={{ left: 16, right: 24, top: 8, bottom: 90 }}>
-                  <CartesianGrid strokeDasharray="2 4" vertical={false} stroke={CHART_COLORS.grid} />
-                  <XAxis
-                    dataKey="specialty"
-                    fontSize={11}
-                    tick={{ fill: CHART_COLORS.ink3 }}
-                    angle={-32}
-                    textAnchor="end"
-                    height={90}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    tickFormatter={mode === 'absolute' ? formatCurrency : (v) => `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`}
-                    fontSize={11}
-                    stroke={CHART_COLORS.ink3}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <Tooltip
-                    cursor={{ fill: 'rgba(244, 93, 72, 0.05)' }}
-                    content={mode === 'absolute' ? <CustomTooltip /> : undefined}
-                  />
-                  <Legend
-                    formatter={(value) => gpoDisplayName(value)}
-                    wrapperStyle={{ paddingTop: 16, fontSize: 12 }}
-                    iconType="circle"
-                  />
-                  {localGPOs.map((gpo) => (
-                    <Bar
-                      key={gpo}
-                      dataKey={gpo}
-                      fill={GPO_COLORS[gpo]}
-                      radius={[3, 3, 0, 0]}
-                      maxBarSize={22}
-                    />
-                  ))}
-                </BarChart>
-              </ResponsiveContainer>
+              <div className={isMobile ? '-mx-3 overflow-x-auto no-scrollbar' : ''}>
+                <div style={isMobile ? { minWidth: 640 } : undefined}>
+                  <ResponsiveContainer width="100%" height={isMobile ? 420 : 520}>
+                    <BarChart
+                      data={chartData}
+                      margin={{ left: isMobile ? 0 : 16, right: isMobile ? 12 : 24, top: 8, bottom: isMobile ? 70 : 90 }}
+                    >
+                      <CartesianGrid strokeDasharray="2 4" vertical={false} />
+                      <XAxis
+                        dataKey="specialty"
+                        angle={-32}
+                        textAnchor="end"
+                        height={isMobile ? 70 : 90}
+                        axisLine={false}
+                        tickLine={false}
+                        interval={0}
+                      />
+                      <YAxis
+                        tickFormatter={mode === 'absolute' ? formatCurrency : (v) => `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <Tooltip
+                        cursor={{ fill: 'var(--color-tint-coral)' }}
+                        content={mode === 'absolute' ? <CustomTooltip /> : undefined}
+                      />
+                      <Legend
+                        formatter={(value) => gpoDisplayName(value)}
+                        wrapperStyle={{ paddingTop: 16, fontSize: 12 }}
+                        iconType="circle"
+                      />
+                      {localGPOs.map((gpo) => (
+                        <Bar
+                          key={gpo}
+                          dataKey={gpo}
+                          fill={GPO_COLORS[gpo]}
+                          radius={[3, 3, 0, 0]}
+                          maxBarSize={22}
+                        />
+                      ))}
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
             </div>
           </div>
         </Reveal>
@@ -207,13 +215,13 @@ export function GPOComparison({
         <Reveal delay={2}>
           <div className="bezel-outer">
             <div className="bezel-inner overflow-hidden">
-              <div className="p-7 pb-4">
-                <div className="grid grid-cols-12 items-end gap-4">
+              <div className="p-5 sm:p-7 pb-4">
+                <div className="grid grid-cols-12 items-end gap-3 sm:gap-4">
                   <div className="col-span-12 md:col-span-8">
                     <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink-4">
                       table 1 — full ledger
                     </p>
-                    <h2 className="mt-2 font-display text-[24px] md:text-[28px] font-medium tracking-[-0.02em] text-ink">
+                    <h2 className="mt-2 font-display text-[20px] sm:text-[24px] md:text-[28px] font-medium tracking-[-0.02em] text-ink">
                       Specialty-level breakdown.
                     </h2>
                   </div>
@@ -226,7 +234,7 @@ export function GPOComparison({
               </div>
 
               <div className="overflow-x-auto px-2 pb-4">
-                <table className="w-full text-[13px]">
+                <table className="w-full min-w-[640px] text-[13px]">
                   <thead>
                     <tr className="border-b border-ink/[0.08]">
                       <th className="px-4 py-3 text-left font-mono text-[10px] uppercase tracking-[0.18em] font-medium text-ink-4">
