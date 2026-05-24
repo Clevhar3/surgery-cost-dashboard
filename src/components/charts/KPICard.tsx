@@ -1,32 +1,93 @@
+import { TrendUp, TrendDown } from '@phosphor-icons/react'
+import { AnimatedNumber } from '../ui/AnimatedNumber'
+import { Reveal } from '../ui/Reveal'
+
+export type KPITone = 'ink' | 'coral' | 'olive' | 'ochre' | 'graphite'
+
+interface KPICardProps {
+  label: string
+  value: string
+  sublabel?: string
+  numeric?: number
+  numericFormat?: (n: number) => string
+  tone?: KPITone
+  delta?: { value: number; label: string; positive?: boolean }
+  code?: string
+  delay?: 0 | 1 | 2 | 3 | 4 | 5 | 6
+}
+
+const toneAccent: Record<KPITone, string> = {
+  ink: 'bg-ink',
+  coral: 'bg-coral-500',
+  olive: 'bg-olive-500',
+  ochre: 'bg-ochre-500',
+  graphite: 'bg-graphite-500',
+}
+
 export function KPICard({
   label,
   value,
   sublabel,
-  color = 'primary',
-}: {
-  label: string
-  value: string
-  sublabel?: string
-  color?: 'primary' | 'teal' | 'purple' | 'amber'
-}) {
-  const colorMap = {
-    primary: 'bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300',
-    teal: 'bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300',
-    purple: 'bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
-    amber: 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
-  }
-
+  numeric,
+  numericFormat,
+  tone = 'ink',
+  delta,
+  code,
+  delay = 0,
+}: KPICardProps) {
   return (
-    <div className="card flex flex-col">
-      <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-        {label}
-      </span>
-      <span className={`mt-2 text-2xl font-bold ${colorMap[color].split(' ').slice(1).join(' ')}`}>
-        {value}
-      </span>
-      {sublabel && (
-        <span className="mt-1 text-sm text-slate-500 dark:text-slate-400">{sublabel}</span>
-      )}
-    </div>
+    <Reveal delay={delay}>
+      <div className="bezel-outer h-full">
+        <div className="bezel-inner relative flex h-full flex-col p-7 overflow-hidden">
+          <div className="flex items-start justify-between gap-3">
+            <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink-4">
+              {label}
+            </p>
+            {code && (
+              <span className="font-mono text-[10px] tracking-wider text-ink-5">{code}</span>
+            )}
+          </div>
+
+          <div className="mt-7 flex items-baseline gap-2">
+            <span className={`inline-block h-3 w-1 rounded-full ${toneAccent[tone]}`} aria-hidden />
+            <span className="font-display text-[44px] sm:text-[52px] font-medium tracking-[-0.04em] text-ink leading-none tnum">
+              {numeric !== undefined && numericFormat ? (
+                <AnimatedNumber value={numeric} format={numericFormat} />
+              ) : (
+                value
+              )}
+            </span>
+          </div>
+
+          {sublabel && (
+            <p className="mt-3 text-[12px] leading-relaxed text-ink-3 text-pretty">
+              {sublabel}
+            </p>
+          )}
+
+          {delta && (
+            <div className="mt-5 flex items-center gap-1.5">
+              <span
+                className={[
+                  'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium tnum',
+                  delta.positive
+                    ? 'bg-[#E8F0E5] text-[#3A5C36]'
+                    : 'bg-coral-50 text-coral-700',
+                ].join(' ')}
+              >
+                {delta.positive ? (
+                  <TrendUp weight="bold" className="h-3 w-3" />
+                ) : (
+                  <TrendDown weight="bold" className="h-3 w-3" />
+                )}
+                {delta.value >= 0 ? '+' : ''}
+                {delta.value.toFixed(1)}%
+              </span>
+              <span className="text-[11px] text-ink-4">{delta.label}</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </Reveal>
   )
 }

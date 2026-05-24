@@ -1,60 +1,124 @@
 import { NavLink } from 'react-router-dom'
+import {
+  ChartLineUp,
+  Scales,
+  ChartBar,
+  MagnifyingGlass,
+  CaretLeft,
+  CaretRight,
+  FirstAidKit,
+} from '@phosphor-icons/react'
 
 const navItems = [
-  { to: '/', label: 'Overview', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
-  { to: '/gpo-comparison', label: 'GPO Comparison', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
-  { to: '/analysis', label: 'Statistical Analysis', icon: 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
-  { to: '/procedures', label: 'Procedure Explorer', icon: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' },
+  { to: '/', label: 'Overview', icon: ChartLineUp, code: '01' },
+  { to: '/gpo-comparison', label: 'GPO comparison', icon: Scales, code: '02' },
+  { to: '/analysis', label: 'Statistical analysis', icon: ChartBar, code: '03' },
+  { to: '/procedures', label: 'Procedure explorer', icon: MagnifyingGlass, code: '04' },
 ]
 
 export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
   return (
     <aside
-      className={`fixed top-0 left-0 h-full bg-white dark:bg-surface-dark border-r border-border dark:border-border-dark z-30 transition-all duration-300 ${
-        collapsed ? 'w-16' : 'w-64'
-      }`}
+      className={[
+        'fixed top-6 bottom-6 left-6 z-40 transition-[width] duration-500',
+        collapsed ? 'w-[72px]' : 'w-[236px]',
+      ].join(' ')}
     >
-      <div className="flex items-center h-16 px-4 border-b border-border dark:border-border-dark">
-        {!collapsed && (
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-            </div>
-            <span className="font-semibold text-sm text-slate-900 dark:text-white">Surgery Costs</span>
-          </div>
-        )}
-        <button
-          onClick={onToggle}
-          className={`p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 ${collapsed ? 'mx-auto' : 'ml-auto'}`}
-        >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={collapsed ? 'M13 5l7 7-7 7M5 5l7 7-7 7' : 'M11 19l-7-7 7-7m8 14l-7-7 7-7'} />
-          </svg>
-        </button>
-      </div>
+      <div className="bezel-outer h-full">
+        <div className="bezel-inner relative flex h-full flex-col overflow-hidden p-3">
+          <header className="flex items-center gap-2 px-2 pt-2 pb-5">
+            <span
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-ink text-paper"
+              aria-hidden
+            >
+              <FirstAidKit weight="bold" className="h-4 w-4" />
+            </span>
+            {!collapsed && (
+              <div className="min-w-0 leading-tight">
+                <p className="font-display text-[14px] font-semibold tracking-tight text-ink">
+                  Procyon
+                </p>
+                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink-4">
+                  cost atlas
+                </p>
+              </div>
+            )}
+          </header>
 
-      <nav className="mt-4 px-2 space-y-1">
-        {navItems.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                isActive
-                  ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
-              }`
-            }
-          >
-            <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={item.icon} />
-            </svg>
-            {!collapsed && <span>{item.label}</span>}
-          </NavLink>
-        ))}
-      </nav>
+          <nav className="flex-1 space-y-1">
+            {navItems.map((item) => {
+              const Icon = item.icon
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.to === '/'}
+                  className={({ isActive }) =>
+                    [
+                      'group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium tracking-tight transition-all duration-300',
+                      isActive
+                        ? 'bg-ink text-paper'
+                        : 'text-ink-3 hover:bg-paper-2 hover:text-ink',
+                    ].join(' ')
+                  }
+                >
+                  {({ isActive }) => (
+                    <>
+                      <Icon
+                        weight={isActive ? 'fill' : 'regular'}
+                        className="h-[18px] w-[18px] shrink-0"
+                      />
+                      {!collapsed && (
+                        <>
+                          <span className="truncate">{item.label}</span>
+                          <span
+                            className={[
+                              'ml-auto font-mono text-[10px] tracking-wider',
+                              isActive ? 'text-coral-300' : 'text-ink-5',
+                            ].join(' ')}
+                          >
+                            {item.code}
+                          </span>
+                        </>
+                      )}
+                      {collapsed && (
+                        <span
+                          className="pointer-events-none absolute left-[calc(100%+12px)] z-50 whitespace-nowrap rounded-lg bg-ink px-2.5 py-1.5 text-[11px] font-medium text-paper opacity-0 ring-1 ring-white/10 transition-opacity duration-200 group-hover:opacity-100"
+                        >
+                          {item.label}
+                          <span className="ml-2 font-mono text-[9px] text-coral-300">{item.code}</span>
+                        </span>
+                      )}
+                    </>
+                  )}
+                </NavLink>
+              )
+            })}
+          </nav>
+
+          <footer className="mt-4 space-y-3 border-t border-ink/[0.06] pt-4">
+            {!collapsed && (
+              <div className="px-2">
+                <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink-4">
+                  Records
+                </p>
+                <p className="mt-1 font-display text-[20px] font-medium tracking-tight text-ink tnum">
+                  4,608
+                </p>
+                <p className="font-mono text-[10px] text-ink-4">surgery cost rows</p>
+              </div>
+            )}
+            <button
+              onClick={onToggle}
+              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              className="press flex w-full items-center justify-center gap-2 rounded-xl bg-paper-2 px-3 py-2 text-[11px] font-medium text-ink-3 hover:text-ink"
+            >
+              {collapsed ? <CaretRight weight="bold" className="h-3 w-3" /> : <CaretLeft weight="bold" className="h-3 w-3" />}
+              {!collapsed && <span>Collapse</span>}
+            </button>
+          </footer>
+        </div>
+      </div>
     </aside>
   )
 }

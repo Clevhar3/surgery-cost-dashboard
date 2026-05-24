@@ -4,8 +4,12 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Legend, Cell,
 } from 'recharts'
+import { ChartBar, Sparkle, Equals } from '@phosphor-icons/react'
 import type { SurgeryCostRow } from '../types/database'
 import { Header } from '../components/layout/Header'
+import { Reveal } from '../components/ui/Reveal'
+import { Select } from '../components/ui/Select'
+import { Segmented } from '../components/ui/Button'
 import {
   mean, stddev, coefficientOfVariation, boxPlotStats,
   computeCorrelationMatrix, factorDecomposition,
@@ -19,12 +23,17 @@ import {
 import { FEE_COLORS, CHART_COLORS } from '../lib/colors'
 
 function NarrativeText({ text }: { text: string }) {
-  // Parse markdown bold (**text**) into React elements safely
   const parts = text.split(/\*\*(.*?)\*\*/g)
   return (
-    <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+    <p className="text-[15px] leading-relaxed text-ink-2 text-pretty">
       {parts.map((part, i) =>
-        i % 2 === 1 ? <strong key={i}>{part}</strong> : part
+        i % 2 === 1 ? (
+          <strong key={i} className="font-semibold text-ink">
+            {part}
+          </strong>
+        ) : (
+          part
+        )
       )}
     </p>
   )
@@ -57,14 +66,12 @@ export function StatisticalAnalysis({
 
   const displayFn = compareBy === 'region' ? regionDisplayName : gpoDisplayName
 
-  // Fee breakdown stacked bar
   const feeData = useMemo(() => {
     if (procData.length === 0) return []
     return feeBreakdownByGroup(procData, (r) => compareBy === 'region' ? r.region : r.gpo)
       .map((d) => ({ ...d, name: displayFn(d.name) }))
   }, [procData, compareBy, displayFn])
 
-  // Factor impact tornado
   const tornadoData = useMemo(() => {
     if (procData.length === 0) return []
     return factorDecomposition(procData, compareBy).map((f) => ({
@@ -73,7 +80,6 @@ export function StatisticalAnalysis({
     }))
   }, [procData, compareBy])
 
-  // Box plot data - rendered as grouped bars showing min, Q1, median, Q3, max
   const boxData = useMemo(() => {
     if (procData.length === 0) return []
     const groups = groupBy(procData, (r) => compareBy === 'region' ? r.region : r.gpo)
@@ -90,7 +96,6 @@ export function StatisticalAnalysis({
     })
   }, [procData, compareBy, displayFn])
 
-  // Correlation matrix
   const corrData = useMemo(() => computeCorrelationMatrix(procData.length > 0 ? procData : data), [procData, data])
 
   const corrLabels = useMemo(() => {
@@ -99,7 +104,6 @@ export function StatisticalAnalysis({
     return [...labels]
   }, [corrData])
 
-  // Stats cards
   const medians = useMemo(() => procData.map((d) => Number(d.estimated_cost_median)), [procData])
   const statsCards = useMemo(() => {
     if (medians.length === 0) return null
@@ -120,202 +124,359 @@ export function StatisticalAnalysis({
   )
 
   return (
-    <div>
-      <Header title="Statistical Analysis" allRegions={allRegions} allGPOs={allGPOs} />
-      <div className="p-6 space-y-6">
-        {/* Controls */}
-        <div className="card">
-          <div className="flex flex-wrap gap-4 items-end">
-            <div className="flex-1 min-w-[250px]">
-              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
-                Select Procedure
-              </label>
-              <select
-                value={selectedProc}
-                onChange={(e) => setSelectedProc(e.target.value)}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-border dark:border-border-dark bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-              >
-                <option value="">Choose a procedure...</option>
-                {procedures.map((p) => (
-                  <option key={p} value={p}>{p}</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex rounded-lg overflow-hidden border border-border dark:border-border-dark">
-              <button
-                onClick={() => setCompareBy('region')}
-                className={`px-4 py-2 text-sm ${compareBy === 'region' ? 'bg-primary-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300'}`}
-              >
-                Across Regions
-              </button>
-              <button
-                onClick={() => setCompareBy('gpo')}
-                className={`px-4 py-2 text-sm ${compareBy === 'gpo' ? 'bg-primary-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300'}`}
-              >
-                Across GPOs
-              </button>
+    <>
+      <Header
+        title={selectedProc ? selectedProc.toLowerCase() : 'Decompose any procedure into its drivers.'}
+        eyebrow="section 03 — statistical analysis"
+        lede={selectedProc
+          ? `Cost decomposition across ${compareBy === 'region' ? 'regions' : 'GPOs'} for the selected procedure. Pulls fee-level breakdowns, variance drivers, distribution shape, and a correlation matrix.`
+          : 'Pick a procedure to see what actually drives its cost — fee category, geography, contracting partner — instead of relying on a single sticker price.'}
+        allRegions={allRegions}
+        allGPOs={allGPOs}
+      />
+
+      <section className="space-y-8 pb-24">
+        <Reveal>
+          <div className="bezel-outer">
+            <div className="bezel-inner p-6">
+              <div className="grid grid-cols-12 gap-4 items-end">
+                <div className="col-span-12 md:col-span-7">
+                  <Select
+                    label="Procedure"
+                    placeholder="Choose a procedure to analyze..."
+                    searchable
+                    value={selectedProc}
+                    onChange={setSelectedProc}
+                    options={procedures.map((p) => ({ value: p, label: p }))}
+                  />
+                </div>
+                <div className="col-span-12 md:col-span-5 md:flex md:justify-end">
+                  <div>
+                    <p className="mb-2 font-mono text-[11px] uppercase tracking-[0.16em] text-ink-4">
+                      Compare across
+                    </p>
+                    <Segmented
+                      options={[
+                        { value: 'region', label: 'Regions' },
+                        { value: 'gpo', label: 'GPOs' },
+                      ]}
+                      value={compareBy}
+                      onChange={(v) => setCompareBy(v as 'region' | 'gpo')}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        </Reveal>
 
         {!selectedProc ? (
-          <div className="card text-center py-16">
-            <svg className="w-16 h-16 mx-auto text-slate-300 dark:text-slate-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            <p className="text-slate-500 dark:text-slate-400">Select a procedure above to view detailed statistical analysis</p>
-          </div>
+          <EmptyAnalysisState />
         ) : (
           <>
-            {/* Narrative Summary */}
-            <div className="card border-l-4 border-l-primary-500">
-              <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-                Variance Summary
-              </h3>
-              <NarrativeText text={narrative} />
-            </div>
+            <Reveal delay={1}>
+              <div className="bezel-outer">
+                <div className="bezel-inner relative overflow-hidden p-8 md:p-10">
+                  <div
+                    aria-hidden
+                    className="absolute -top-12 -right-12 h-48 w-48 rounded-full bg-coral-100/70 blur-3xl"
+                  />
+                  <div className="relative">
+                    <div className="flex items-center gap-2">
+                      <Sparkle weight="duotone" className="h-4 w-4 text-coral-500" />
+                      <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink-4">
+                        variance summary
+                      </p>
+                    </div>
+                    <div className="mt-4 max-w-3xl">
+                      <NarrativeText text={narrative} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Reveal>
 
-            {/* Stat Cards */}
             {statsCards && (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                <StatCard label="Mean" value={formatCurrencyFull(statsCards.mean)} />
-                <StatCard label="Std Deviation" value={formatCurrencyFull(statsCards.stdDev)} />
-                <StatCard label="CV" value={`${statsCards.cv.toFixed(1)}%`} />
-                <StatCard label="IQR" value={formatCurrencyFull(statsCards.iqr)} />
-                <StatCard label="Range" value={formatCurrencyFull(statsCards.range)} />
-                <StatCard label="Observations" value={String(statsCards.count)} />
+                <StatCard delay={1} label="Mean" value={formatCurrencyFull(statsCards.mean)} numeric={statsCards.mean} fmt={(n) => formatCurrencyFull(n)} />
+                <StatCard delay={2} label="Std dev" value={formatCurrencyFull(statsCards.stdDev)} numeric={statsCards.stdDev} fmt={(n) => formatCurrencyFull(n)} />
+                <StatCard delay={3} label="CV" value={`${statsCards.cv.toFixed(1)}%`} numeric={statsCards.cv} fmt={(n) => `${n.toFixed(1)}%`} />
+                <StatCard delay={4} label="IQR" value={formatCurrencyFull(statsCards.iqr)} numeric={statsCards.iqr} fmt={(n) => formatCurrencyFull(n)} />
+                <StatCard delay={5} label="Range" value={formatCurrencyFull(statsCards.range)} numeric={statsCards.range} fmt={(n) => formatCurrencyFull(n)} />
+                <StatCard delay={6} label="Observations" value={String(statsCards.count)} numeric={statsCards.count} fmt={(n) => Math.round(n).toLocaleString()} />
               </div>
             )}
 
-            {/* Charts Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Fee Breakdown Stacked Bar */}
-              <div className="card">
-                <h2 className="text-base font-semibold text-slate-900 dark:text-white mb-4">
-                  Cost Breakdown by {compareBy === 'region' ? 'Region' : 'GPO'}
-                </h2>
-                <ResponsiveContainer width="100%" height={350}>
-                  <BarChart data={feeData} margin={{ left: 10, right: 10, top: 5, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="name" fontSize={11} tick={{ fill: '#64748B' }} />
-                    <YAxis tickFormatter={formatCurrency} fontSize={12} />
+            <div className="grid grid-cols-12 gap-6">
+              <Reveal className="col-span-12 lg:col-span-6" delay={1}>
+                <ChartCard
+                  eyebrow={`fee-level · by ${compareBy === 'region' ? 'region' : 'GPO'}`}
+                  title="Cost composition"
+                  height={360}
+                >
+                  <BarChart data={feeData} margin={{ left: 8, right: 8, top: 8, bottom: 8 }}>
+                    <CartesianGrid strokeDasharray="2 4" vertical={false} stroke={CHART_COLORS.grid} />
+                    <XAxis dataKey="name" fontSize={11} tick={{ fill: CHART_COLORS.ink3 }} axisLine={false} tickLine={false} />
+                    <YAxis tickFormatter={formatCurrency} fontSize={11} stroke={CHART_COLORS.ink3} axisLine={false} tickLine={false} />
                     <Tooltip
+                      cursor={{ fill: 'rgba(244, 93, 72, 0.05)' }}
                       formatter={(value, name) => [formatCurrencyFull(Number(value)), titleCase(String(name).replace('_', ' '))]}
                     />
-                    <Legend formatter={(v) => titleCase(v.replace('_', ' '))} />
-                    {Object.entries(FEE_COLORS).map(([key, color]) => (
-                      <Bar key={key} dataKey={key} stackId="fees" fill={color} />
+                    <Legend formatter={(v) => titleCase(v.replace('_', ' '))} iconType="circle" wrapperStyle={{ fontSize: 12, paddingTop: 12 }} />
+                    {Object.entries(FEE_COLORS).map(([key, color], i, arr) => (
+                      <Bar
+                        key={key}
+                        dataKey={key}
+                        stackId="fees"
+                        fill={color}
+                        radius={i === arr.length - 1 ? [6, 6, 0, 0] : [0, 0, 0, 0]}
+                      />
                     ))}
                   </BarChart>
-                </ResponsiveContainer>
-              </div>
+                </ChartCard>
+              </Reveal>
 
-              {/* Factor Impact Tornado */}
-              <div className="card">
-                <h2 className="text-base font-semibold text-slate-900 dark:text-white mb-4">
-                  Factor Impact (Variance Contribution)
-                </h2>
-                <ResponsiveContainer width="100%" height={350}>
+              <Reveal className="col-span-12 lg:col-span-6" delay={2}>
+                <ChartCard
+                  eyebrow="variance attribution"
+                  title="What drives the spread"
+                  height={360}
+                >
                   <BarChart
                     data={tornadoData}
                     layout="vertical"
-                    margin={{ left: 100, right: 30, top: 5, bottom: 5 }}
+                    margin={{ left: 120, right: 32, top: 8, bottom: 8 }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                    <XAxis type="number" tickFormatter={formatCurrency} fontSize={12} />
-                    <YAxis type="category" dataKey="label" width={95} fontSize={12} tick={{ fill: '#64748B' }} />
-                    <Tooltip formatter={(v) => [formatCurrencyFull(Number(v)), 'Impact']} />
-                    <Bar dataKey="impact" radius={[0, 4, 4, 0]}>
+                    <CartesianGrid strokeDasharray="2 4" horizontal={false} stroke={CHART_COLORS.grid} />
+                    <XAxis type="number" tickFormatter={formatCurrency} fontSize={11} stroke={CHART_COLORS.ink3} axisLine={false} tickLine={false} />
+                    <YAxis type="category" dataKey="label" width={115} fontSize={11} tick={{ fill: CHART_COLORS.ink3 }} axisLine={false} tickLine={false} />
+                    <Tooltip
+                      cursor={{ fill: 'rgba(244, 93, 72, 0.05)' }}
+                      formatter={(v) => [formatCurrencyFull(Number(v)), 'Impact']}
+                    />
+                    <Bar dataKey="impact" radius={[0, 6, 6, 0]}>
                       {tornadoData.map((_, i) => (
                         <Cell key={i} fill={Object.values(FEE_COLORS)[i] || CHART_COLORS.muted} />
                       ))}
                     </Bar>
                   </BarChart>
-                </ResponsiveContainer>
-              </div>
+                </ChartCard>
+              </Reveal>
 
-              {/* Box Plot as range bars */}
-              <div className="card">
-                <h2 className="text-base font-semibold text-slate-900 dark:text-white mb-4">
-                  Cost Distribution by {compareBy === 'region' ? 'Region' : 'GPO'}
-                </h2>
-                <ResponsiveContainer width="100%" height={350}>
-                  <BarChart data={boxData} margin={{ left: 10, right: 10, top: 20, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="name" fontSize={11} tick={{ fill: '#64748B' }} />
-                    <YAxis tickFormatter={formatCurrency} fontSize={12} />
-                    <Tooltip formatter={(value, name) => [formatCurrencyFull(Number(value)), String(name)]} />
-                    <Legend />
-                    <Bar dataKey="min" name="Min" fill="#94A3B8" maxBarSize={30} radius={[2, 2, 0, 0]} />
-                    <Bar dataKey="q1" name="Q1 (25th)" fill="#93C5FD" maxBarSize={30} radius={[2, 2, 0, 0]} />
-                    <Bar dataKey="median" name="Median" fill={CHART_COLORS.primary} maxBarSize={30} radius={[2, 2, 0, 0]} />
-                    <Bar dataKey="q3" name="Q3 (75th)" fill="#1D4ED8" maxBarSize={30} radius={[2, 2, 0, 0]} />
-                    <Bar dataKey="max" name="Max" fill="#1E3A8A" maxBarSize={30} radius={[2, 2, 0, 0]} />
+              <Reveal className="col-span-12 lg:col-span-6" delay={1}>
+                <ChartCard
+                  eyebrow={`distribution · by ${compareBy === 'region' ? 'region' : 'GPO'}`}
+                  title="Cost distribution"
+                  height={360}
+                >
+                  <BarChart data={boxData} margin={{ left: 8, right: 8, top: 20, bottom: 8 }}>
+                    <CartesianGrid strokeDasharray="2 4" vertical={false} stroke={CHART_COLORS.grid} />
+                    <XAxis dataKey="name" fontSize={11} tick={{ fill: CHART_COLORS.ink3 }} axisLine={false} tickLine={false} />
+                    <YAxis tickFormatter={formatCurrency} fontSize={11} stroke={CHART_COLORS.ink3} axisLine={false} tickLine={false} />
+                    <Tooltip
+                      cursor={{ fill: 'rgba(244, 93, 72, 0.05)' }}
+                      formatter={(value, name) => [formatCurrencyFull(Number(value)), String(name)]}
+                    />
+                    <Legend iconType="circle" wrapperStyle={{ fontSize: 12, paddingTop: 12 }} />
+                    <Bar dataKey="min" name="min" fill="#B8B3A4" maxBarSize={26} radius={[3, 3, 0, 0]} />
+                    <Bar dataKey="q1" name="Q1" fill="#FFA688" maxBarSize={26} radius={[3, 3, 0, 0]} />
+                    <Bar dataKey="median" name="median" fill={CHART_COLORS.primary} maxBarSize={26} radius={[3, 3, 0, 0]} />
+                    <Bar dataKey="q3" name="Q3" fill="#B22F1F" maxBarSize={26} radius={[3, 3, 0, 0]} />
+                    <Bar dataKey="max" name="max" fill="#5E1810" maxBarSize={26} radius={[3, 3, 0, 0]} />
                   </BarChart>
-                </ResponsiveContainer>
-              </div>
+                </ChartCard>
+              </Reveal>
 
-              {/* Correlation Heatmap */}
-              <div className="card">
-                <h2 className="text-base font-semibold text-slate-900 dark:text-white mb-4">
-                  Correlation Matrix
-                </h2>
-                <div className="overflow-x-auto">
-                  <table className="text-xs w-full">
-                    <thead>
-                      <tr>
-                        <th className="p-1"></th>
-                        {corrLabels.map((l) => (
-                          <th key={l} className="p-1 text-slate-500 font-medium text-center whitespace-nowrap" style={{ writingMode: 'vertical-rl', maxHeight: '80px' }}>
-                            {l}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {corrLabels.map((row) => (
-                        <tr key={row}>
-                          <td className="p-1 text-slate-500 font-medium whitespace-nowrap text-right pr-2">{row}</td>
-                          {corrLabels.map((col) => {
-                            const pair = corrData.find((c) => c.x === row && c.y === col)
-                            const r = pair?.r ?? 0
-                            const absR = Math.abs(r)
-                            const bg = r > 0
-                              ? `rgba(37, 99, 235, ${absR * 0.7})`
-                              : `rgba(220, 38, 38, ${absR * 0.7})`
-                            const textColor = absR > 0.5 ? 'white' : undefined
-                            return (
-                              <td
-                                key={col}
-                                className="p-1 text-center tabular-nums"
-                                style={{ backgroundColor: bg, color: textColor, minWidth: '36px' }}
-                                title={`${row} vs ${col}: r=${r.toFixed(3)}`}
+              <Reveal className="col-span-12 lg:col-span-6" delay={2}>
+                <div className="bezel-outer h-full">
+                  <div className="bezel-inner p-7 h-full">
+                    <div className="mb-6">
+                      <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink-4">
+                        pairwise · pearson
+                      </p>
+                      <h3 className="mt-2 font-display text-[22px] font-medium tracking-tight text-ink">
+                        Correlation matrix
+                      </h3>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-[10px]">
+                        <thead>
+                          <tr>
+                            <th className="p-1"></th>
+                            {corrLabels.map((l) => (
+                              <th
+                                key={l}
+                                className="p-1 text-center font-mono font-medium text-ink-4"
+                                style={{ writingMode: 'vertical-rl', maxHeight: '90px' }}
                               >
-                                {r.toFixed(2)}
+                                {l}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {corrLabels.map((row) => (
+                            <tr key={row}>
+                              <td className="whitespace-nowrap p-1 pr-3 text-right font-mono text-[10px] text-ink-4">
+                                {row}
                               </td>
-                            )
-                          })}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                              {corrLabels.map((col) => {
+                                const pair = corrData.find((c) => c.x === row && c.y === col)
+                                const r = pair?.r ?? 0
+                                const absR = Math.abs(r)
+                                const bg = r > 0
+                                  ? `rgba(244, 93, 72, ${absR * 0.85})`
+                                  : `rgba(43, 49, 56, ${absR * 0.85})`
+                                const textColor = absR > 0.5 ? '#FCFBF8' : '#2D2A21'
+                                return (
+                                  <td
+                                    key={col}
+                                    className="p-1 text-center tnum font-mono text-[10px]"
+                                    style={{ backgroundColor: bg, color: textColor, minWidth: '38px', borderRadius: 4 }}
+                                    title={`${row} vs ${col}: r=${r.toFixed(3)}`}
+                                  >
+                                    {r.toFixed(2)}
+                                  </td>
+                                )
+                              })}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </Reveal>
             </div>
           </>
         )}
+      </section>
+    </>
+  )
+}
+
+interface StatCardProps {
+  label: string
+  value: string
+  numeric: number
+  fmt: (n: number) => string
+  delay: 0 | 1 | 2 | 3 | 4 | 5 | 6
+}
+
+function StatCard({ label, value, delay }: StatCardProps) {
+  return (
+    <Reveal delay={delay}>
+      <div className="bezel-outer h-full">
+        <div className="bezel-inner flex flex-col gap-2 p-5 h-full">
+          <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink-4">
+            {label}
+          </span>
+          <span className="font-display text-[22px] font-medium tracking-tight text-ink tnum">
+            {value}
+          </span>
+        </div>
+      </div>
+    </Reveal>
+  )
+}
+
+interface ChartCardProps {
+  eyebrow: string
+  title: string
+  height: number
+  children: React.ReactElement
+}
+
+function ChartCard({ eyebrow, title, height, children }: ChartCardProps) {
+  return (
+    <div className="bezel-outer h-full">
+      <div className="bezel-inner p-7 h-full">
+        <div className="mb-6">
+          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink-4">
+            {eyebrow}
+          </p>
+          <h3 className="mt-2 font-display text-[22px] font-medium tracking-tight text-ink">
+            {title}
+          </h3>
+        </div>
+        <ResponsiveContainer width="100%" height={height}>
+          {children}
+        </ResponsiveContainer>
       </div>
     </div>
   )
 }
 
-function StatCard({ label, value }: { label: string; value: string }) {
+function EmptyAnalysisState() {
   return (
-    <div className="card text-center">
-      <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-        {label}
-      </span>
-      <p className="mt-1 text-lg font-bold text-slate-900 dark:text-white">{value}</p>
-    </div>
+    <Reveal delay={1}>
+      <div className="bezel-outer">
+        <div className="bezel-inner relative overflow-hidden p-10 md:p-14">
+          <div
+            aria-hidden
+            className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-coral-100/60 blur-3xl"
+          />
+          <div className="relative grid grid-cols-12 gap-8 items-center">
+            <div className="col-span-12 md:col-span-7">
+              <div className="flex items-center gap-2">
+                <Equals weight="bold" className="h-4 w-4 text-coral-500" />
+                <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink-4">
+                  getting started
+                </p>
+              </div>
+              <h2 className="mt-5 font-display text-[36px] md:text-[44px] leading-[0.96] tracking-[-0.03em] text-ink text-balance">
+                Pick a procedure to begin the decomposition.
+              </h2>
+              <p className="mt-5 max-w-md text-[14px] leading-relaxed text-ink-3">
+                Once selected, this page will show six summary statistics, a fee-level cost
+                composition, a tornado of variance drivers, the distribution shape across
+                groups, and a Pearson correlation matrix.
+              </p>
+              <ul className="mt-7 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {[
+                  'Total knee arthroplasty',
+                  'Carpal tunnel release',
+                  'Laparoscopic cholecystectomy',
+                  'Cataract surgery',
+                ].map((p) => (
+                  <li key={p} className="flex items-center gap-2 font-mono text-[11px] text-ink-3">
+                    <span className="h-1 w-1 rounded-full bg-coral-500" />
+                    {p}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="col-span-12 md:col-span-5">
+              <div className="grid grid-cols-2 gap-3 opacity-70">
+                {[
+                  { l: 'mean', v: '$—' },
+                  { l: 'std dev', v: '$—' },
+                  { l: 'CV', v: '—%' },
+                  { l: 'IQR', v: '$—' },
+                ].map((s, i) => (
+                  <div key={s.l} className="bezel-outer pulse-soft" style={{ animationDelay: `${i * 200}ms` }}>
+                    <div className="bezel-inner p-4">
+                      <p className="font-mono text-[9px] uppercase tracking-[0.22em] text-ink-4">{s.l}</p>
+                      <p className="mt-2 font-display text-[20px] font-medium tracking-tight text-ink-5 tnum">
+                        {s.v}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-3 bezel-outer pulse-soft" style={{ animationDelay: '800ms' }}>
+                <div className="bezel-inner flex items-center gap-3 p-4">
+                  <ChartBar weight="duotone" className="h-5 w-5 text-coral-500" />
+                  <p className="font-mono text-[11px] text-ink-3">
+                    Four charts will materialize here.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Reveal>
   )
 }
